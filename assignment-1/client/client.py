@@ -1,12 +1,14 @@
 import socket
 import os
-from cryptography.fernet import Fernet
+import sys
+from Crypto.Cipher import DES, AES
+from Crypto.Util.Padding import pad, unpad
 
-# STATIC FILES
 SEPARATOR = "\t"
 BUFFER_SIZE = 4096
+BLOCK_SIZE = 32
 
-host = "192.168.1.15"
+host = "localhost"
 port = 5001
 filename = "./static/file-example.txt"
 
@@ -14,12 +16,12 @@ def load_key():
     return open("./key.key", "rb").read()
 
 def encrypt(filename, key):
-    f = Fernet(key)
+    cipher = AES.new(key, AES.MODE_ECB)
 
     with open(filename, "rb") as file:
         file_data = file.read()
     
-    encrypted_data = f.encrypt(file_data)
+    encrypted_data = cipher.encrypt(pad(file_data, BLOCK_SIZE))
 
     filename = "./encrypted/file-example.txt"
 
