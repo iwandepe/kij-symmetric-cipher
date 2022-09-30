@@ -11,8 +11,16 @@ BUFFER_SIZE = 4096
 SEPARATOR = "\t"
 BLOCK_SIZE = 32
 
+absolutePath = ''
+relativePath = '.'
+
+# ===== begin:allamDir =====
+absolutePath = '/home/allam/dev-project/kij'
+relativePath = '/assignment-1/server'
+# ===== end:allamDir =====
+
 def load_key():
-    return open("./key.key", "rb").read()
+    return open(f"{absolutePath}{relativePath}/key.key", "rb").read()
 
 s = socket.socket()
 s.bind((SERVER_HOST, SERVER_PORT))
@@ -37,7 +45,7 @@ def decrypt(filename, key):
         file.write(decrypted_data)
 
 filename, filesize = received.split(SEPARATOR)
-filename = './static/' + os.path.basename(filename)
+filename = f"{absolutePath}{relativePath}/static/" + os.path.basename(filename)
 filesize = int(filesize)
 
 with open(filename, "wb") as f:
