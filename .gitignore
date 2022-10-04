@@ -1,2 +1,4 @@
 /assignment-1/testing.py
 client/__pycache__
+client/encrypted
+server/static

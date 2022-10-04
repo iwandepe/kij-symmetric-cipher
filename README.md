@@ -9,11 +9,11 @@
 
 - analyze
   - block cipher
-    - ECB
-    - CBC
-    - CFB
-    - OFB
-    - CTR
+    - ECB = 1
+    - CBC = 2
+    - CFB = 3
+    - OFB = 5
+    - CTR = 6
   - stream cipher
     - RC4
 

@@ -1,83 +1,90 @@
-import socket
 import os
 import sys
+import socket
 from analizer import Analizer
-from Crypto.Cipher import DES, AES
+
 from Crypto.Util.Padding import pad, unpad
+from Crypto.Cipher import DES, AES
+from collections import namedtuple
+import yaml
 
-SEPARATOR = "\t"
-BUFFER_SIZE = 4096
-BLOCK_SIZE = 32
-
-TARGET_FILE1 = 'file-example.txt'
-TARGET_FILE2 = 'kabupaten.txt'
-TARGET_FILE = TARGET_FILE2 # select ur target here
-
-host = "localhost"
-port = 5001
-absolutePath = ''
-relativePath = '.'
-filename = f"{absolutePath}{relativePath}/static/{TARGET_FILE}"
-
-# ===== begin:allamDir =====
-# absolutePath = '/home/allam/dev-project/kij'
-# relativePath = '/assignment-1/client'
-# filename = f"{absolutePath}{relativePath}/static/{TARGET_FILE}"
-# ===== end:allamDir =====
 
 def load_key():
-    key = open(f"{absolutePath}{relativePath}/key.key", "rb").read()
-    print(f"[*] Key loaded: {key}")
-    return key
+    return open(f"{cfg.ABSOLUTEPATH}/client/key.key", "rb").read()
 
-def encrypt(filename, key, AES_MODE=AES.MODE_ECB):
+
+def prepare_connection():
+    global s, client_socket
+
+    s = socket.socket()
+    print(f"[*] Connecting to {cfg.SERVER_HOST}:{cfg.SERVER_PORT}.")
+    s.connect((cfg.SERVER_HOST, cfg.SERVER_PORT))
+    print("[*] Connected.")
+
+
+def encrypt(src_path, key, AES_MODE=AES.MODE_ECB):
     cipher = AES.new(key, AES_MODE)
 
-    with open(filename, "rb") as file:
+    with open(src_path, "rb") as file:
         file_data = file.read()
-    
-    # ===== begin:timer block =====
-    lizer = Analizer('ECB', './data/record.csv', filename)
+
+    lizer = Analizer(src_path, AES_MODE)
+
     lizer.startTimer()
-    # ===== end:timer block =====
-
-    encrypted_data = cipher.encrypt(pad(file_data, BLOCK_SIZE))
-
-    # ===== begin:timer block =====
+    encrypted_data = cipher.encrypt(pad(file_data, cfg.BLOCK_SIZE))
     lizer.endTimer()
+
     try:
         lizer.addToRecord()
-    finally:
-        print( 'record failed to save' )
-    # ===== end:timer block =====
+    except Exception as exc:
+        print( '[!] Record failed to save :', exc)
 
-    filename = f"{absolutePath}{relativePath}/encrypted/{TARGET_FILE}"
+    dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
 
-    with open(filename, "wb") as file:
+    with open(dst_path, "wb") as file:
         file.write(encrypted_data)
-    
 
-key = load_key()
 
-s = socket.socket()
+def read_config(path):
+    with open(path, "r") as stream:
+        try:
+            global cfg
+            dict_cfg = yaml.safe_load(stream)
+            cfg = namedtuple("MyConf", dict_cfg.keys())(*dict_cfg.values())
+        except yaml.YAMLError as exc:
+            print(exc)
 
-print(f"[+] Connecting to {host}:{port}")
-s.connect((host, port))
-print("[+] Connected.")
 
-encrypt(filename, key)
-filename = f"{absolutePath}{relativePath}/encrypted/{TARGET_FILE}"
-filesize = os.path.getsize(filename)
+if __name__ == "__main__":
+    read_config("D:\Coll\\7_7-KIJ-C\kij\config\config.yml")
+    key = load_key()
 
-print(f"{filename}{SEPARATOR}{filesize}")
+    # modes = [1,2,3,5,6]
+    # files = ['small.txt', 'big.txt']
+    filename = cfg.TARGET_FILE
+    mode = cfg.MODE
 
-s.send(f"{filename}{SEPARATOR}{filesize}".encode())
+    # for filename in files:
+    try:
+        prepare_connection()
 
-with open(filename, "rb") as f:
-    while True:
-        bytes_read = f.read(BUFFER_SIZE)
-        if not bytes_read:
-            break
-        s.sendall(bytes_read)
+        filepath = f"{cfg.ABSOLUTEPATH}/client/static/{filename}"
 
-s.close()
+        encrypt(filepath, key, mode)
+
+        realname = f"{cfg.ABSOLUTEPATH}/client/encrypted/{filename}"
+        enc_path = realname.replace('.txt', '.bin')
+        enc_size = os.path.getsize(enc_path)
+
+        s.send(f"{realname}{cfg.SEPARATOR}{enc_size}{cfg.SEPARATOR}{mode}".encode())
+
+        with open(enc_path, "rb") as f:
+            while True:
+                bytes_read = f.read(cfg.BUFFER_SIZE)
+                if not bytes_read:
+                    break
+                s.sendall(bytes_read)
+
+    except Exception as exc:
+        print(exc)
+    s.close()
