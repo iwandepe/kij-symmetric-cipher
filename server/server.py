@@ -50,42 +50,31 @@ if __name__ == "__main__":
     
     prepare_connection()
     
-    conn_list = [s]
     try:
-        while(True):
-            readable, writable, errored = select.select(conn_list, [], [])
+        client_socket, address = s.accept()
+        print(f"[*] {address} is connected.")
+    
+        received = client_socket.recv(cfg.BUFFER_SIZE).decode()
+            
+        print(f"[*] Received: {received}")
+        filename, filesize = received.split('\t')
+        filename = f"{cfg.ABSOLUTEPATH}/server/static/" + os.path.basename(filename)
 
-            for sock in readable:
-                if sock is s:
-                    client_socket, address = s.accept()
-                    conn_list.append(client_socket)
-                    print(f"[*] {address} is connected.")
-                else:
-                    received = sock.recv(cfg.BUFFER_SIZE).decode()
-                        
-                    print(f"[*] Received: {received}")
-                    filename, filesize = received.split('\t')
-                    filename = f"{cfg.ABSOLUTEPATH}/server/static/" + os.path.basename(filename)
+        filesize = int(filesize)
 
-                    filesize = int(filesize)
+        with open(filename, "wb") as f:
+            while True:
+                bytes_read = client_socket.recv(cfg.BUFFER_SIZE)
+                if not bytes_read:
+                    break
 
-                    with open(filename, "wb") as f:
-                        while True:
-                            bytes_read = sock.recv(cfg.BUFFER_SIZE)
-                            if not bytes_read:
-                                break
+                f.write(bytes_read)
 
-                            f.write(bytes_read)
+        decrypt(filename, key)
+        print(f"[*] Received data {filename}\n\n")
 
-                    decrypt(filename, key)
-
-                    print(f"[*] Received data {filename}\n\n")
-
-                    if(True):
-                        sock.close()
-                        conn_list.remove(sock)
-                        print(f"[*] {address} is disconnected.\n\n")
-                        continue
+        client_socket.close()
+        print(f"[*] {address} is disconnected.\n\n")
 
     except KeyboardInterrupt:
         print('[*] Exiting...')
