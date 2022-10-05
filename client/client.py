@@ -1,9 +1,11 @@
 import os
 import sys
 import socket
+import json
 from analizer import Analizer
 from pathlib import Path
 
+from base64 import b64encode
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import DES, AES
 from collections import namedtuple
@@ -23,7 +25,7 @@ def prepare_connection():
     print("[*] Connected.")
 
 
-def encrypt(src_path, key, AES_MODE=AES.MODE_ECB):
+def encrypt(src_path, key, AES_MODE=AES.MODE_ECB) -> str:
     cipher = AES.new(key, AES_MODE)
 
     with open(src_path, "rb") as file:
@@ -33,6 +35,11 @@ def encrypt(src_path, key, AES_MODE=AES.MODE_ECB):
 
     lizer.startTimer()
     encrypted_data = cipher.encrypt(pad(file_data, cfg.BLOCK_SIZE))
+    
+    nonce = None
+    if (AES_MODE == 6):
+        nonce = b64encode(cipher.nonce).decode('utf-8')
+
     lizer.endTimer()
 
     try:
@@ -44,6 +51,8 @@ def encrypt(src_path, key, AES_MODE=AES.MODE_ECB):
 
     with open(dst_path, "wb") as file:
         file.write(encrypted_data)
+
+    return nonce
 
 
 def read_config(path):
@@ -75,13 +84,15 @@ if __name__ == "__main__":
 
         filepath = f"{cfg.ABSOLUTEPATH}/client/static/{filename}"
 
-        encrypt(filepath, key, mode)
+        nonce = encrypt(filepath, key, mode)
 
         realname = f"{cfg.ABSOLUTEPATH}/client/encrypted/{filename}"
         enc_path = realname.replace('.txt', '.bin')
         enc_size = os.path.getsize(enc_path)
 
-        s.send(f"{realname}{cfg.SEPARATOR}{enc_size}{cfg.SEPARATOR}{mode}".encode())
+        if nonce is None:
+            nonce = 'ECB'
+        s.send(f"{realname}{cfg.SEPARATOR}{enc_size}{cfg.SEPARATOR}{mode}{cfg.SEPARATOR}{nonce}".encode())
 
         with open(enc_path, "rb") as f:
             while True:

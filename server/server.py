@@ -4,6 +4,7 @@ import socket
 import select
 from pathlib import Path
 
+from base64 import b64decode
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import DES, AES
 from collections import namedtuple
@@ -24,8 +25,11 @@ def prepare_connection():
     print(f"[*] Listening as {cfg.SERVER_HOST}:{cfg.SERVER_PORT}")
 
 
-def decrypt(dst_path, key, AES_MODE=AES.MODE_ECB):
-    cipher = AES.new(key, AES_MODE)
+def decrypt(dst_path, key, AES_MODE=AES.MODE_ECB, nonce=None):
+    if (nonce is None):
+        cipher = AES.new(key, AES_MODE)
+    else:
+        cipher = AES.new(key, AES_MODE, nonce=b64decode(nonce))
 
     with open(dst_path, "rb") as file:
         encrypted_data = file.read()
@@ -91,7 +95,7 @@ if __name__ == "__main__":
         
             received = client_socket.recv(cfg.BUFFER_SIZE).decode()
                 
-            received_path, enc_size, mode = received.split(cfg.SEPARATOR)
+            received_path, enc_size, mode, nonce = received.split(cfg.SEPARATOR)
             dst_path = f"{cfg.ABSOLUTEPATH}/server/static/" + os.path.basename(received_path)
 
             print(f"[*] Received {received}")
@@ -106,7 +110,10 @@ if __name__ == "__main__":
                         break
                     f.write(bytes_read)
 
-            decrypt(dst_path, key, int(mode))
+            if (int(mode) == 6):
+                decrypt(dst_path, key, int(mode), nonce)
+            else:
+                decrypt(dst_path, key, int(mode))
 
 
             if(not cfg.RECURSIVE):
