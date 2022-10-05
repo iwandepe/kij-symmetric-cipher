@@ -2,6 +2,7 @@ import os
 import sys
 import socket
 import select
+from pathlib import Path
 
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import DES, AES
@@ -40,6 +41,9 @@ def read_config(path):
         try:
             global cfg
             dict_cfg = yaml.safe_load(stream)
+            if("ABSOLUTEPATH" not in dict_cfg):
+                dict_cfg["ABSOLUTEPATH"] = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
+                
             cfg = namedtuple("MyConf", dict_cfg.keys())(*dict_cfg.values())
         except yaml.YAMLError as exc:
             print(exc)
@@ -71,7 +75,8 @@ def translate_mode(mode):
 
 
 if __name__ == "__main__":
-    read_config("D:\Coll\\7_7-KIJ-C\kij\config\config.yml")
+    base_path = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
+    read_config(base_path + "/config/config.yml")
     key = load_key()
 
     files = ['small.txt', 'big.txt']
