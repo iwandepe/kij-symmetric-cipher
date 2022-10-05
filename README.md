@@ -13,13 +13,14 @@ This is a simple implementation of a symetric cypher in python. It uses the AES 
 
 - Analyze
   - Block Cipher
-    - ECB = 1
-    - CBC = 2 X
-    - CFB = 3 X
-    - OFB = 5 X
-    - CTR = 6 X
+    - ECB = 1 ✔️
+    - CBC = 2 ✔️
+    - CFB = 3 ✔️
+    - OFB = 5 ✔️
+    - CTR = 6 ✔️
   - Stream Cipher
-    - RC4 X
+    - RC4 ❌
+  - DES ❌
 
 ## Installation
 
