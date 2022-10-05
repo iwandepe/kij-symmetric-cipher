@@ -25,11 +25,14 @@ def prepare_connection():
     print(f"[*] Listening as {cfg.SERVER_HOST}:{cfg.SERVER_PORT}")
 
 
-def decrypt(dst_path, key, AES_MODE=AES.MODE_ECB, nonce=None):
-    if (nonce is None):
+def decrypt(dst_path, key, AES_MODE=AES.MODE_ECB, nonce=None, iv=None):
+    cipher = None
+    if (int(mode) == 1):
         cipher = AES.new(key, AES_MODE)
-    else:
+    elif (int(mode) == 6):
         cipher = AES.new(key, AES_MODE, nonce=b64decode(nonce))
+    else:
+        cipher = AES.new(key, AES_MODE, iv=b64decode(iv))
 
     with open(dst_path, "rb") as file:
         encrypted_data = file.read()
@@ -95,7 +98,7 @@ if __name__ == "__main__":
         
             received = client_socket.recv(cfg.BUFFER_SIZE).decode()
                 
-            received_path, enc_size, mode, nonce = received.split(cfg.SEPARATOR)
+            received_path, enc_size, mode, iv = received.split(cfg.SEPARATOR)
             dst_path = f"{cfg.ABSOLUTEPATH}/server/static/" + os.path.basename(received_path)
 
             print(f"[*] Received {received}")
@@ -110,10 +113,12 @@ if __name__ == "__main__":
                         break
                     f.write(bytes_read)
 
-            if (int(mode) == 6):
-                decrypt(dst_path, key, int(mode), nonce)
-            else:
+            if (int(mode) == 1):
                 decrypt(dst_path, key, int(mode))
+            elif (int(mode) == 6):
+                decrypt(dst_path, key, int(mode), nonce=iv),
+            else:
+                decrypt(dst_path, key, int(mode), iv=iv)
 
 
             if(not cfg.RECURSIVE):

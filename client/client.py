@@ -25,7 +25,7 @@ def prepare_connection():
     print("[*] Connected.")
 
 
-def encrypt(src_path, key, AES_MODE=AES.MODE_ECB) -> str:
+def encrypt(src_path, key, AES_MODE=AES.MODE_ECB):
     cipher = AES.new(key, AES_MODE)
 
     with open(src_path, "rb") as file:
@@ -36,9 +36,11 @@ def encrypt(src_path, key, AES_MODE=AES.MODE_ECB) -> str:
     lizer.startTimer()
     encrypted_data = cipher.encrypt(pad(file_data, cfg.BLOCK_SIZE))
     
-    nonce = None
+    iv = None
     if (AES_MODE == 6):
-        nonce = b64encode(cipher.nonce).decode('utf-8')
+        iv = b64encode(cipher.nonce).decode('utf-8')
+    elif (AES_MODE != 1):
+        iv = b64encode(cipher.iv).decode('utf-8')
 
     lizer.endTimer()
 
@@ -52,7 +54,7 @@ def encrypt(src_path, key, AES_MODE=AES.MODE_ECB) -> str:
     with open(dst_path, "wb") as file:
         file.write(encrypted_data)
 
-    return nonce
+    return iv
 
 
 def read_config(path):
@@ -84,15 +86,16 @@ if __name__ == "__main__":
 
         filepath = f"{cfg.ABSOLUTEPATH}/client/static/{filename}"
 
-        nonce = encrypt(filepath, key, mode)
+        iv = encrypt(filepath, key, mode)
 
         realname = f"{cfg.ABSOLUTEPATH}/client/encrypted/{filename}"
         enc_path = realname.replace('.txt', '.bin')
         enc_size = os.path.getsize(enc_path)
 
-        if nonce is None:
-            nonce = 'ECB'
-        s.send(f"{realname}{cfg.SEPARATOR}{enc_size}{cfg.SEPARATOR}{mode}{cfg.SEPARATOR}{nonce}".encode())
+        if iv is None:
+            iv = 'ECB'
+        
+        s.send(f"{realname}{cfg.SEPARATOR}{enc_size}{cfg.SEPARATOR}{mode}{cfg.SEPARATOR}{iv}".encode())
 
         with open(enc_path, "rb") as f:
             while True:
