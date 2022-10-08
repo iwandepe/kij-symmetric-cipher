@@ -10,8 +10,8 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import DES, AES
 from collections import namedtuple
 import yaml
+from RC4 import RC4_encryption
 import numpy as np
-
 
 def load_key():
     return open(f"{cfg.ABSOLUTEPATH}/client/key.key", "rb").read()
@@ -61,46 +61,14 @@ def encryptRC4(src_path, key):
     with open(src_path, "r") as file:
         file_data = file.read()
 
-    S = KSA(key)
-    encrypted_data = np.array(PRGA(S, len(file_data)))
+    RC4 = RC4_encryption(file_data, key)
     dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
 
-    # print(encrypted_data)
-    plaintext = np.array([ord(c) for c in file_data])
-    cipher = plaintext ^ encrypted_data
-
-    # print(cipher.astype(np.uint8).data.hex())
-    # print([chr(c) for c in cipher])
-
-    final_encrypted = "".join([chr(c) for c in cipher])
+    final_encrypted = RC4.result
     with open(dst_path, "w", encoding="utf-8") as file:
         file.write(final_encrypted)
 
-    return "RC4"
-
-def KSA(key):
-    key_length = len(key)
-    S = list(range(256))
-    j = 0
-    for i in range(256):
-        j = (j + S[i] + key[i % key_length]) % 256
-        S[i], S[j] = S[j], S[i]
-
-    return S
-
-def PRGA(S, n):
-    i = 0
-    j = 0
-    key = []
-
-    while n>0:
-        n = n-1
-        i = (i + 1) % 256
-        j = (j + S[i]) % 256
-        S[i], S[j] = S[j], S[i]
-        K = S[(S[i] + S[j]) % 256]
-        key.append(K)
-    return key
+    return RC4.iv
 
 def preparing_key_array(s):
     return [ord(c) for c in s]

@@ -10,6 +10,8 @@ from Crypto.Cipher import DES, AES
 from collections import namedtuple
 import yaml
 
+from RC4 import RC4_encryption
+
 
 def load_key():
     return open(f"{cfg.ABSOLUTEPATH}/server/key.key", "rb").read()
@@ -42,6 +44,15 @@ def decrypt(dst_path, key, AES_MODE=AES.MODE_ECB, nonce=None, iv=None):
     with open(dst_path, "wb") as file:
         file.write(decrypted_data)
 
+def decryptRC4(dst_path, key):
+    with open(dst_path, "r", encoding="utf-8") as file:
+        encrypted_data = file.read()
+    
+    RC4 = RC4_encryption(encrypted_data, key)
+    decrypted_data = RC4.result
+
+    with open(dst_path, "w") as file:
+        file.write(decrypted_data)
 
 def read_config(path):
     with open(path, "r") as stream:
@@ -68,7 +79,7 @@ def translate_mode(mode):
     if(mode==6): 
         return 'MODE_CTR'
     if(mode==7): 
-        return 'MODE_OPENPGP'
+        return 'MODE_RC4'
     if(mode==8): 
         return 'MODE_CCM'
     if(mode==9): 
@@ -117,6 +128,8 @@ if __name__ == "__main__":
                 decrypt(dst_path, key, int(mode))
             elif (int(mode) == 6):
                 decrypt(dst_path, key, int(mode), nonce=iv),
+            elif (int(mode) == 7):
+                decryptRC4(dst_path, key)
             else:
                 decrypt(dst_path, key, int(mode), iv=iv)
 
