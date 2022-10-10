@@ -35,7 +35,7 @@ def encrypt(src_path, key, AES_MODE=AES.MODE_ECB):
     lizer = Analizer(src_path, AES_MODE)
 
     lizer.startTimer()
-    encrypted_data = cipher.encrypt(pad(file_data, cfg.BLOCK_SIZE))
+    encrypted_data = cipher.encrypt(pad(file_data, 16))
     
     iv = None
     if (AES_MODE == 6):
@@ -70,6 +70,21 @@ def encryptRC4(src_path, key):
 
     return RC4.iv
 
+def encryptDES(src_path, key):
+    cipher = DES.new(key, DES.MODE_ECB)
+
+    with open(src_path, "rb") as file:
+        file_data = file.read()
+
+    encrypted_data = cipher.encrypt(pad(file_data, 8))
+
+    dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
+
+    with open(dst_path, "wb") as file:
+        file.write(encrypted_data)
+        
+    return None
+
 def preparing_key_array(s):
     return [ord(c) for c in s]
 
@@ -95,6 +110,7 @@ if __name__ == "__main__":
     # files = ['small.txt', 'big.txt']
     filename = cfg.TARGET_FILE
     mode = cfg.MODE
+    method = cfg.METHOD
 
     # for filename in files:
     try:
@@ -102,17 +118,22 @@ if __name__ == "__main__":
 
         filepath = f"{cfg.ABSOLUTEPATH}/client/static/{filename}"
 
-        if(mode != 7):
+        if(method == "AES"):
             iv = encrypt(filepath, key, mode)
-        else:
+        elif(method == "RC4"):
             iv = encryptRC4(filepath, key)
+        elif(method == "DES"):
+            iv = encryptDES(filepath, "12345678".encode())
+        else:
+            print("Invalid method")
+            sys.exit(1)
 
         realname = f"{cfg.ABSOLUTEPATH}/client/encrypted/{filename}"
-        enc_path = realname.replace('.txt', '.bin')
+        enc_path = realname.replace(".txt", ".bin")
         enc_size = os.path.getsize(enc_path)
 
         if iv is None:
-            iv = 'ECB'
+            iv = "ECB"
         
         s.send(f"{realname}{cfg.SEPARATOR}{enc_size}{cfg.SEPARATOR}{mode}{cfg.SEPARATOR}{iv}".encode())
 

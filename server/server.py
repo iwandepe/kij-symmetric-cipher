@@ -39,7 +39,7 @@ def decrypt(dst_path, key, AES_MODE=AES.MODE_ECB, nonce=None, iv=None):
     with open(dst_path, "rb") as file:
         encrypted_data = file.read()
 
-    decrypted_data = unpad(cipher.decrypt(encrypted_data), cfg.BLOCK_SIZE)
+    decrypted_data = unpad(cipher.decrypt(encrypted_data), 16)
 
     with open(dst_path, "wb") as file:
         file.write(decrypted_data)
@@ -52,6 +52,17 @@ def decryptRC4(dst_path, key):
     decrypted_data = RC4.result
 
     with open(dst_path, "w") as file:
+        file.write(decrypted_data)
+
+def decryptDES(dst_path, key):
+    cipher = DES.new(key, DES.MODE_ECB)
+
+    with open(dst_path, "rb") as file:
+        encrypted_data = file.read()
+
+    decrypted_data = unpad(cipher.decrypt(encrypted_data), 8)
+
+    with open(dst_path, "wb") as file:
         file.write(decrypted_data)
 
 def read_config(path):
@@ -97,6 +108,9 @@ if __name__ == "__main__":
     read_config(base_path + "/config/config.yml")
     key = load_key()
 
+    mode = cfg.MODE
+    method = cfg.METHOD
+
     files = ['small.txt', 'big.txt']
     
     # for filename in files:
@@ -108,7 +122,7 @@ if __name__ == "__main__":
         while (True):
         
             received = client_socket.recv(cfg.BUFFER_SIZE).decode()
-                
+
             received_path, enc_size, mode, iv = received.split(cfg.SEPARATOR)
             dst_path = f"{cfg.ABSOLUTEPATH}/server/static/" + os.path.basename(received_path)
 
@@ -124,14 +138,20 @@ if __name__ == "__main__":
                         break
                     f.write(bytes_read)
 
-            if (int(mode) == 1):
-                decrypt(dst_path, key, int(mode))
-            elif (int(mode) == 6):
-                decrypt(dst_path, key, int(mode), nonce=iv),
-            elif (int(mode) == 7):
+            if (method == "AES"):
+                if (int(mode) == 1):
+                    decrypt(dst_path, key, int(mode))
+                elif (int(mode) == 6):
+                    decrypt(dst_path, key, int(mode), nonce=iv),
+                else:
+                    decrypt(dst_path, key, int(mode), iv=iv)
+            elif (method == "RC4"):
                 decryptRC4(dst_path, key)
+            elif (method == "DES"):
+                decryptDES(dst_path, "12345678".encode())
             else:
-                decrypt(dst_path, key, int(mode), iv=iv)
+                print("Invalid method")
+                sys.exit(1)
 
 
             if(not cfg.RECURSIVE):
