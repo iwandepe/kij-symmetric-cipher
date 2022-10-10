@@ -19,8 +19,8 @@ This is a simple implementation of a symetric cypher in python. It uses the AES 
     - OFB = 5 ✔️
     - CTR = 6 ✔️
   - Stream Cipher
-    - RC4 ❌
-  - DES ❌
+    - RC4 ✔️
+  - DES ✔️
 
 ## Installation
 
