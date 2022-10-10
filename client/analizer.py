@@ -8,8 +8,10 @@ class Analizer:
     def __init__(
         self, 
         _target,
-        _mode
+        _method=None,
+        _mode=None
     ):
+        self.method = _method
         self.mode = _mode
         self.name = self.translate_mode()
         self.startTime = 0
@@ -30,7 +32,8 @@ class Analizer:
         fileName = os.path.basename( self.target )
 
         data = {
-            'METHOD': [ self.name ],
+            'METHOD': [ self.method ],
+            'MODE': [self.name],
             'FILENAME': [ fileName ],
             'SIZE_BYTE': [ fileSize ],
             'ELAPSED_SEC': [ self.totalTime ]
@@ -43,13 +46,13 @@ class Analizer:
         self.addingRecordToCsv(data)
 
     def addingRecordToCsv(self, _toBeAppended):
-        df = pd.DataFrame(_toBeAppended, columns=['METHOD','FILENAME','SIZE_BYTE','ELAPSED_SEC'])
+        df = pd.DataFrame(_toBeAppended, columns=['METHOD','MODE', 'FILENAME','SIZE_BYTE','ELAPSED_SEC'])
         isExist = os.path.isfile(self.path)
 
         if (isExist):
             dfOld = pd.read_csv(self.path)
             dfNew = pd.concat([dfOld, pd.DataFrame.from_records(df)])
-            dfNew.to_csv(self.path, columns=['METHOD','FILENAME','SIZE_BYTE','ELAPSED_SEC'], index=True)
+            dfNew.to_csv(self.path, columns=['METHOD','MODE', 'FILENAME','SIZE_BYTE','ELAPSED_SEC'], index=True)
 
             print( '[*] Record successfully added.' )
             return
