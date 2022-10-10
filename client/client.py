@@ -32,7 +32,7 @@ def encrypt(src_path, key, AES_MODE=AES.MODE_ECB):
     with open(src_path, "rb") as file:
         file_data = file.read()
 
-    lizer = Analizer(src_path, AES_MODE)
+    lizer = Analizer(src_path, "AES", AES_MODE)
 
     lizer.startTimer()
     encrypted_data = cipher.encrypt(pad(file_data, 16))
@@ -61,7 +61,18 @@ def encryptRC4(src_path, key):
     with open(src_path, "r") as file:
         file_data = file.read()
 
+    lizer = Analizer(src_path, "RC4")
+
+    lizer.startTimer()
     RC4 = RC4_encryption(file_data, key)
+
+    lizer.endTimer()
+
+    try:
+        lizer.addToRecord()
+    except Exception as exc:
+        print( '[!] Record failed to save :', exc)
+
     dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
 
     final_encrypted = RC4.result
@@ -73,10 +84,21 @@ def encryptRC4(src_path, key):
 def encryptDES(src_path, key):
     cipher = DES.new(key, DES.MODE_ECB)
 
+    lizer = Analizer(src_path, "DES", DES.MODE_ECB)
+
+    lizer.startTimer()
+
     with open(src_path, "rb") as file:
         file_data = file.read()
 
     encrypted_data = cipher.encrypt(pad(file_data, 8))
+
+    lizer.endTimer()
+
+    try:
+        lizer.addToRecord()
+    except Exception as exc:
+        print( '[!] Record failed to save :', exc)
 
     dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
 
@@ -133,9 +155,9 @@ if __name__ == "__main__":
         enc_size = os.path.getsize(enc_path)
 
         if iv is None:
-            iv = "ECB"
+            iv = "None"
         
-        s.send(f"{realname}{cfg.SEPARATOR}{enc_size}{cfg.SEPARATOR}{mode}{cfg.SEPARATOR}{iv}".encode())
+        s.send(f"{realname}{cfg.SEPARATOR}{enc_size}{cfg.SEPARATOR}{iv}".encode())
 
         with open(enc_path, "rb") as f:
             while True:

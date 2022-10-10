@@ -123,7 +123,7 @@ if __name__ == "__main__":
         
             received = client_socket.recv(cfg.BUFFER_SIZE).decode()
 
-            received_path, enc_size, mode, iv = received.split(cfg.SEPARATOR)
+            received_path, enc_size, iv = received.split(cfg.SEPARATOR)
             dst_path = f"{cfg.ABSOLUTEPATH}/server/static/" + os.path.basename(received_path)
 
             print(f"[*] Received {received}")
