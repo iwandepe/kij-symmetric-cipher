@@ -1,5 +1,6 @@
 testing.py
 client/__pycache__
 client/encrypted
+client/static
 server/static
 **/__pycache__/

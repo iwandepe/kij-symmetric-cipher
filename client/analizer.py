@@ -18,7 +18,12 @@ class Analizer:
         self.endTime = 0
         self.totalTime = 0
         self.path = '../results/record.csv'
-        self.target = _target
+        self.target = self.setTarget(_target)
+
+    def setTarget(self, target):
+        _fname = os.path.basename(target)
+        targetEnc = f'./encrypted/{_fname}'
+        return target
     
     def startTimer(self):
         self.startTime = time.time()

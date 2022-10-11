@@ -5,7 +5,7 @@ import json
 from analizer import Analizer
 from pathlib import Path
 
-from base64 import b64encode
+from base64 import b64encode, b64decode
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import DES, AES
 from collections import namedtuple
@@ -30,7 +30,7 @@ def prepare_connection():
     print("[*] Connected.")
 
 
-def encrypt(src_path, key, AES_MODE=AES.MODE_ECB):
+def encryptAES(src_path, key, AES_MODE=AES.MODE_ECB):
     cipher = AES.new(key, AES_MODE)
 
     with open(src_path, "rb") as file:
@@ -115,10 +115,19 @@ def encryptRC4lib(src_path, key):
 
     return None
 
-def encryptDES(src_path, key):
-    cipher = DES.new(key, DES.MODE_ECB)
+def encryptDES(src_path, key, DES_MODE=DES.MODE_ECB):
+    iv=None
+    nonce = b''
 
-    lizer = Analizer(src_path, "DES", DES.MODE_ECB)
+    if (int(DES_MODE) == 1):
+        cipher = DES.new(key, DES_MODE)
+    elif (int(DES_MODE) == 6):
+        cipher = DES.new(key, DES_MODE, nonce=nonce)
+    else:
+        cipher = DES.new(key, DES_MODE)
+        iv = b64encode(cipher.iv).decode('utf-8')
+
+    lizer = Analizer(src_path, "DES", cfg.MODE)
 
     lizer.startTimer()
 
@@ -134,12 +143,12 @@ def encryptDES(src_path, key):
     except Exception as exc:
         print( '[!] Record failed to save :', exc)
 
-    dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
+    dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}"
 
     with open(dst_path, "wb") as file:
         file.write(encrypted_data)
         
-    return None
+    return iv
 
 def preparing_key_array(s):
     return [ord(c) for c in s]
@@ -161,6 +170,7 @@ if __name__ == "__main__":
     base_path = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
     read_config(base_path + "/config/config.yml")
     key = load_key()
+    keyDES = "12345678".encode()
 
     # modes = [1,2,3,5,6]
     # files = ['small.txt', 'big.txt']
@@ -175,13 +185,13 @@ if __name__ == "__main__":
         filepath = f"{cfg.ABSOLUTEPATH}/client/static/{filename}"
 
         if(method == "AES"):
-            iv = encrypt(filepath, key, mode)
+            iv = encryptAES(filepath, key, mode)
         elif(method == "RC4"):
             iv = encryptRC4(filepath, key)
         elif(method == "RC4lib"):
             iv = encryptRC4lib(filepath, key)
         elif(method == "DES"):
-            iv = encryptDES(filepath, "12345678".encode())
+            iv = encryptDES(filepath, keyDES, mode)
         else:
             print("Invalid method")
             sys.exit(1)
