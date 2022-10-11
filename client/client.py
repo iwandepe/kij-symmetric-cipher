@@ -90,16 +90,14 @@ def encUtilRC4(key,p):
 
 
 def encryptRC4lib(src_path, key):
-    key=b'\xe39-b\x87\x8c\xe2\x19\x0c\x90\x10^\xc0\xb7\xea\xe9\x16\xfc00\xe0\x0b\xda\xad3\xe3\xbe\x9c\xc9e\xdco'
-
-    with open(src_path, "r") as file:
+    with open(src_path, "rb") as file:
         file_data = file.read()
 
     lizer = Analizer(src_path, "RC4lib")
 
     lizer.startTimer()
-    # RC4 = RC4_encryption(file_data, key)
-    RC4 = encUtilRC4(key, file_data.encode())
+
+    RC4 = encUtilRC4(key, file_data)
 
     lizer.endTimer()
 
@@ -110,8 +108,9 @@ def encryptRC4lib(src_path, key):
 
     dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
 
-    final_encrypted = RC4.decode()
-    with open(dst_path, "w", encoding="utf-8") as file:
+    final_encrypted = RC4
+
+    with open(dst_path, "wb") as file:
         file.write(final_encrypted)
 
     return None
