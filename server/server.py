@@ -10,6 +10,8 @@ from Crypto.Cipher import DES, AES
 from collections import namedtuple
 import yaml
 
+from Crypto.Cipher import ARC4
+
 from RC4 import RC4_encryption
 
 
@@ -50,6 +52,23 @@ def decryptRC4(dst_path, key):
     
     RC4 = RC4_encryption(encrypted_data, key)
     decrypted_data = RC4.result
+
+    with open(dst_path, "w") as file:
+        file.write(decrypted_data)
+
+def decUtilRC4(key,msg):
+    return ARC4.new(key).decrypt(msg)
+
+def decryptRC4lib(dst_path):
+    key=b'\xe39-b\x87\x8c\xe2\x19\x0c\x90\x10^\xc0\xb7\xea\xe9\x16\xfc00\xe0\x0b\xda\xad3\xe3\xbe\x9c\xc9e\xdco'
+
+    with open(dst_path, "r", encoding="utf-8") as file:
+        encrypted_data = file.read()
+    
+    # RC4 = RC4_encryption(encrypted_data, key)
+    # cipher = ARC4.new(tempkey)
+    # msg = nonce + cipher.decrypt(b'Open the pod bay doors, HAL')
+    decrypted_data = decUtilRC4(key, encrypted_data)
 
     with open(dst_path, "w") as file:
         file.write(decrypted_data)
@@ -101,6 +120,8 @@ def translate_mode(mode):
         return 'MODE_GCM'
     if(mode==12): 
         return 'MODE_OCB'
+    if(mode==13): 
+        return 'MODE_RC4lib'
 
 
 if __name__ == "__main__":
@@ -147,6 +168,8 @@ if __name__ == "__main__":
                     decrypt(dst_path, key, int(mode), iv=iv)
             elif (method == "RC4"):
                 decryptRC4(dst_path, key)
+            elif (method == "RC4lib"):
+                decryptRC4lib(dst_path)
             elif (method == "DES"):
                 decryptDES(dst_path, "12345678".encode())
             else:
