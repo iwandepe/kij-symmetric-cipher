@@ -9,6 +9,7 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import DES, AES
 from collections import namedtuple
 import yaml
+from Crypto.Random import get_random_bytes
 
 from Crypto.Cipher import ARC4
 
@@ -29,7 +30,7 @@ def prepare_connection():
     print(f"[*] Listening as {cfg.SERVER_HOST}:{cfg.SERVER_PORT}")
 
 
-def decrypt(dst_path, key, AES_MODE=AES.MODE_ECB, nonce=None, iv=None):
+def decryptAES(dst_path, key, AES_MODE=AES.MODE_ECB, nonce=None, iv=None):
     cipher = None
     if (int(mode) == 1):
         cipher = AES.new(key, AES_MODE)
@@ -71,8 +72,15 @@ def decryptRC4lib(dst_path, key):
     with open(dst_path, "wb") as file:
         file.write(decrypted_data)
 
-def decryptDES(dst_path, key):
-    cipher = DES.new(key, DES.MODE_ECB)
+def decryptDES(dst_path, key, DES_MODE=DES.MODE_ECB, nonce=None, iv=None):
+    nonce = b''
+
+    if (int(mode) == 1):
+        cipher = DES.new(key, DES_MODE)
+    elif (int(mode) == 6):
+        cipher = DES.new(key, DES_MODE, nonce=(nonce))
+    else:
+        cipher = DES.new(key, DES_MODE, iv=b64decode(iv))
 
     with open(dst_path, "rb") as file:
         encrypted_data = file.read()
@@ -128,6 +136,7 @@ if __name__ == "__main__":
     base_path = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
     read_config(base_path + "/config/config.yml")
     key = load_key()
+    keyDES = "12345678".encode()
 
     method = cfg.METHOD
     mode = cfg.MODE
@@ -136,8 +145,6 @@ if __name__ == "__main__":
         mode = 7
     elif(method == "RC4lib"):
         mode = 13
-    elif(method == "DES"):
-        mode = 14
 
     files = ['small.txt', 'big.txt']
     
@@ -169,17 +176,22 @@ if __name__ == "__main__":
 
             if (method == "AES"):
                 if (int(mode) == 1):
-                    decrypt(dst_path, key, int(mode))
+                    decryptAES(dst_path, key, int(mode))
                 elif (int(mode) == 6):
-                    decrypt(dst_path, key, int(mode), nonce=iv),
+                    decryptAES(dst_path, key, int(mode), nonce=iv),
                 else:
-                    decrypt(dst_path, key, int(mode), iv=iv)
+                    decryptAES(dst_path, key, int(mode), iv=iv)
             elif (method == "RC4"):
                 decryptRC4(dst_path, key)
             elif (method == "RC4lib"):
                 decryptRC4lib(dst_path, key)
             elif (method == "DES"):
-                decryptDES(dst_path, "12345678".encode())
+                if (int(mode) == 1):
+                    decryptDES(dst_path, keyDES, int(mode))
+                elif (int(mode) == 6):
+                    decryptDES(dst_path, keyDES, int(mode), nonce=iv),
+                else:
+                    decryptDES(dst_path, keyDES, int(mode), iv=iv)
             else:
                 print("Invalid method")
                 sys.exit(1)
