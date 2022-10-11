@@ -13,6 +13,10 @@ import yaml
 from RC4 import RC4_encryption
 import numpy as np
 
+from Crypto.Cipher import ARC4
+from Crypto.Hash import SHA
+from Crypto.Random import get_random_bytes
+
 def load_key():
     return open(f"{cfg.ABSOLUTEPATH}/client/key.key", "rb").read()
 
@@ -81,6 +85,37 @@ def encryptRC4(src_path, key):
 
     return RC4.iv
 
+def encUtilRC4(key,p):
+    return ARC4.new(key).encrypt(p)
+
+
+def encryptRC4lib(src_path, key):
+    key=b'\xe39-b\x87\x8c\xe2\x19\x0c\x90\x10^\xc0\xb7\xea\xe9\x16\xfc00\xe0\x0b\xda\xad3\xe3\xbe\x9c\xc9e\xdco'
+
+    with open(src_path, "r") as file:
+        file_data = file.read()
+
+    lizer = Analizer(src_path, "RC4lib")
+
+    lizer.startTimer()
+    # RC4 = RC4_encryption(file_data, key)
+    RC4 = encUtilRC4(key, file_data.encode())
+
+    lizer.endTimer()
+
+    try:
+        lizer.addToRecord()
+    except Exception as exc:
+        print( '[!] Record failed to save :', exc)
+
+    dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
+
+    final_encrypted = RC4.decode()
+    with open(dst_path, "w", encoding="utf-8") as file:
+        file.write(final_encrypted)
+
+    return None
+
 def encryptDES(src_path, key):
     cipher = DES.new(key, DES.MODE_ECB)
 
@@ -144,6 +179,8 @@ if __name__ == "__main__":
             iv = encrypt(filepath, key, mode)
         elif(method == "RC4"):
             iv = encryptRC4(filepath, key)
+        elif(method == "RC4lib"):
+            iv = encryptRC4lib(filepath, key)
         elif(method == "DES"):
             iv = encryptDES(filepath, "12345678".encode())
         else:
