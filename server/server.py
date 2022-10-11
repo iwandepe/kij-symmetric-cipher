@@ -48,13 +48,13 @@ def decryptAES(dst_path, key, AES_MODE=AES.MODE_ECB, nonce=None, iv=None):
         file.write(decrypted_data)
 
 def decryptRC4(dst_path, key):
-    with open(dst_path, "r", encoding="utf-8") as file:
+    with open(dst_path, "rb", encoding="utf-8") as file:
         encrypted_data = file.read()
     
     RC4 = RC4_encryption(encrypted_data, key)
     decrypted_data = RC4.result
 
-    with open(dst_path, "w") as file:
+    with open(dst_path, "wb") as file:
         file.write(decrypted_data)
 
 def decUtilRC4(key,msg):
