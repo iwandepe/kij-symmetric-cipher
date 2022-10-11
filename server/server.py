@@ -59,10 +59,8 @@ def decryptRC4(dst_path, key):
 def decUtilRC4(key,msg):
     return ARC4.new(key).decrypt(msg)
 
-def decryptRC4lib(dst_path):
-    key=b'\xe39-b\x87\x8c\xe2\x19\x0c\x90\x10^\xc0\xb7\xea\xe9\x16\xfc00\xe0\x0b\xda\xad3\xe3\xbe\x9c\xc9e\xdco'
-
-    with open(dst_path, "r", encoding="utf-8") as file:
+def decryptRC4lib(dst_path, key):
+    with open(dst_path, "rb") as file:
         encrypted_data = file.read()
     
     # RC4 = RC4_encryption(encrypted_data, key)
@@ -70,7 +68,7 @@ def decryptRC4lib(dst_path):
     # msg = nonce + cipher.decrypt(b'Open the pod bay doors, HAL')
     decrypted_data = decUtilRC4(key, encrypted_data)
 
-    with open(dst_path, "w") as file:
+    with open(dst_path, "wb") as file:
         file.write(decrypted_data)
 
 def decryptDES(dst_path, key):
@@ -122,6 +120,8 @@ def translate_mode(mode):
         return 'MODE_OCB'
     if(mode==13): 
         return 'MODE_RC4lib'
+    if(mode==14):
+        return 'MODE_DES'
 
 
 if __name__ == "__main__":
@@ -129,8 +129,15 @@ if __name__ == "__main__":
     read_config(base_path + "/config/config.yml")
     key = load_key()
 
-    mode = cfg.MODE
     method = cfg.METHOD
+    mode = cfg.MODE
+
+    if(method == "RC4"):
+        mode = 7
+    elif(method == "RC4lib"):
+        mode = 13
+    elif(method == "DES"):
+        mode = 14
 
     files = ['small.txt', 'big.txt']
     
@@ -142,6 +149,7 @@ if __name__ == "__main__":
 
         while (True):
         
+            print("While")
             received = client_socket.recv(cfg.BUFFER_SIZE).decode()
 
             received_path, enc_size, iv = received.split(cfg.SEPARATOR)
@@ -169,7 +177,7 @@ if __name__ == "__main__":
             elif (method == "RC4"):
                 decryptRC4(dst_path, key)
             elif (method == "RC4lib"):
-                decryptRC4lib(dst_path)
+                decryptRC4lib(dst_path, key)
             elif (method == "DES"):
                 decryptDES(dst_path, "12345678".encode())
             else:
