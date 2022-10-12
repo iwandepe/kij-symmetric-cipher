@@ -143,7 +143,7 @@ def encryptDES(src_path, key, DES_MODE=DES.MODE_ECB):
     except Exception as exc:
         print( '[!] Record failed to save :', exc)
 
-    dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}"
+    dst_path = f"{cfg.ABSOLUTEPATH}/client/encrypted/{cfg.TARGET_FILE}".replace('.txt', '.bin')
 
     with open(dst_path, "wb") as file:
         file.write(encrypted_data)

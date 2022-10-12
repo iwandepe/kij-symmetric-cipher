@@ -156,7 +156,6 @@ if __name__ == "__main__":
 
         while (True):
         
-            print("While")
             received = client_socket.recv(cfg.BUFFER_SIZE).decode()
 
             received_path, enc_size, iv = received.split(cfg.SEPARATOR)
