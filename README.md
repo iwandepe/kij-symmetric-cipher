@@ -1,6 +1,6 @@
 # Symetric Cypher Implementation in Python
 
-This is a simple implementation of a symetric cypher in python. It uses the AES algorithm to encrypt and decrypt files. It is a simple implementation of the AES algorithm, so it is not secure. It is only for educational purposes. - Informatics Department, Sepuluh Nopember Institute of Technology
+This is a simple implementation of a symetric cypher in python. It uses the AES algorithm to encrypt and decrypt files. It is only for educational purposes. - Informatics Department, Sepuluh Nopember Institute of Technology
 
 ## Group Members:
 
